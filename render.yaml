@@ -3,7 +3,7 @@ services:
     name: omniscanx-ai
     env: python
     buildCommand: "pip install -r requirements.txt && python download_models.py"
-    startCommand: "gunicorn app:app"
+    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0

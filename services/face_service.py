@@ -1,5 +1,12 @@
-import cv2
-import numpy as np
+try:
+    import cv2
+    import numpy as np
+    CV2_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Failed to import cv2. AI features will be disabled. Error: {e}")
+    cv2 = None
+    np = None
+    CV2_AVAILABLE = False
 import base64
 import json
 import os
@@ -11,7 +18,7 @@ detector_model = os.path.join(base_dir, 'models', 'face_detection_yunet.onnx')
 recognizer_model = os.path.join(base_dir, 'models', 'face_recognition_sface.onnx')
 
 # Ensure models exist before initializing
-if os.path.exists(detector_model) and os.path.exists(recognizer_model):
+if CV2_AVAILABLE and os.path.exists(detector_model) and os.path.exists(recognizer_model):
     face_detector = cv2.FaceDetectorYN.create(detector_model, "", (320, 320), 0.9, 0.3, 5000)
     face_recognizer = cv2.FaceRecognizerSF.create(recognizer_model, "")
 else:
