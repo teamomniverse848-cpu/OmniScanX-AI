@@ -7,6 +7,3 @@ Authlib==1.2.1
 requests==2.31.0
 Flask-Mail==0.9.1
 opencv-python-headless
-ultralytics
-deepface
-tf-keras
