@@ -9,8 +9,10 @@ import random
 from psycopg.rows import dict_row
 from flask_mail import Mail, Message
 from authlib.integrations.flask_client import OAuth
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.config.from_object(Config)
 
 # Initialize Flask-Mail
@@ -215,6 +217,75 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'success')
     return redirect(url_for('login'))
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        db = get_db_connection()
+        if db:
+            cursor = db.cursor(row_factory=dict_row)
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            
+            if user:
+                otp = str(random.randint(100000, 999999))
+                session['reset_otp'] = otp
+                session['reset_user_id'] = user['id']
+                
+                try:
+                    if user.get('email'):
+                        msg = Message('Password Reset OTP', recipients=[user['email']])
+                        msg.body = f'Your OTP to reset your password is: {otp}'
+                        mail.send(msg)
+                        flash('A password reset OTP has been sent to your registered email.', 'info')
+                    else:
+                        flash(f'Simulated OTP (No email configured): {otp}', 'info')
+                except Exception as e:
+                    print("Mail error:", e)
+                    flash(f'Simulated OTP for testing (Mail server not setup): {otp}', 'info')
+                    
+                cursor.close()
+                db.close()
+                return redirect(url_for('reset_password'))
+            else:
+                flash('Username not found.', 'danger')
+            cursor.close()
+            db.close()
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    if 'reset_otp' not in session:
+        return redirect(url_for('forgot_password'))
+        
+    if request.method == 'POST':
+        entered_otp = request.form.get('otp')
+        new_password = request.form.get('new_password')
+        
+        if entered_otp == session.get('reset_otp'):
+            user_id = session.get('reset_user_id')
+            db = get_db_connection()
+            if db:
+                cursor = db.cursor()
+                hashed_pw = generate_password_hash(new_password)
+                try:
+                    cursor.execute("UPDATE users SET password_hash = %s WHERE id = %s", (hashed_pw, user_id))
+                    db.commit()
+                    session.pop('reset_otp', None)
+                    session.pop('reset_user_id', None)
+                    flash('Password reset successfully. You can now log in.', 'success')
+                    return redirect(url_for('login'))
+                except Exception as e:
+                    db.rollback()
+                    flash(f'Error resetting password: {str(e)}', 'danger')
+                finally:
+                    cursor.close()
+                    db.close()
+        else:
+            flash('Invalid OTP. Please try again.', 'danger')
+            
+    return render_template('reset_password.html')
 
 # ==========================================
 # Dashboards and Attendance Module

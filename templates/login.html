@@ -18,6 +18,9 @@
                 <div class="mb-4 text-start">
                     <label for="password" class="form-label"><i class="fa-solid fa-lock"></i> Password</label>
                     <input type="password" class="form-control form-control-glass" id="password" name="password" placeholder="Enter password" required>
+                    <div class="text-end mt-2">
+                        <a href="{{ url_for('forgot_password') }}" class="text-info small text-decoration-none fw-bold">Forgot Password?</a>
+                    </div>
                 </div>
                 
                 <div class="d-grid gap-2 mb-3">
