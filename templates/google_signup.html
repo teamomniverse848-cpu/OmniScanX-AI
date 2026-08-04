@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Google Setup - OmniScanX{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="glass-card">
+            <div class="text-center mb-4">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" height="40" class="mb-3">
+                <h2>Almost There!</h2>
+                <p class="text-light">Hi {{ first_name }}, please complete your profile to finish creating your account with <strong>{{ email }}</strong>.</p>
+            </div>
+            
+            <form action="{{ url_for('google_signup') }}" method="POST">
+                
+                <div class="mb-3">
+                    <label class="form-label text-light"><i class="fa-solid fa-user-tag"></i> I am a...</label>
+                    <div class="d-flex gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" id="roleStudent" value="student" checked onchange="toggleDepartment()">
+                            <label class="form-check-label text-light" for="roleStudent">Student</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" id="roleTeacher" value="teacher" onchange="toggleDepartment()">
+                            <label class="form-check-label text-light" for="roleTeacher">Teacher / Admin</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="first_name" class="form-label text-light"><i class="fa-solid fa-user"></i> First Name</label>
+                        <input type="text" class="form-control form-control-glass" id="first_name" name="first_name" value="{{ first_name }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="last_name" class="form-label text-light">Last Name</label>
+                        <input type="text" class="form-control form-control-glass" id="last_name" name="last_name" value="{{ last_name }}" required>
+                    </div>
+                </div>
+
+                <div class="mb-3" id="departmentSection">
+                    <label for="department_id" class="form-label text-light"><i class="fa-solid fa-building"></i> Branch / Department</label>
+                    <select class="form-control form-control-glass" id="department_id" name="department_id">
+                        <option value="" disabled selected>Select your branch/department...</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept.id }}" style="color: #000;">{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="password" class="form-label text-light"><i class="fa-solid fa-lock"></i> Set a Backup Password</label>
+                    <input type="password" class="form-control form-control-glass" id="password" name="password" placeholder="Create a strong password just in case" required>
+                    <small class="text-light opacity-75">You can still log in instantly with Google, but this allows standard login too.</small>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-animated">Complete Setup <i class="fa-solid fa-check"></i></button>
+                </div>
+            </form>
+            
+            <div class="mt-4 text-center">
+                <a href="{{ url_for('login') }}" class="text-light text-decoration-none"><i class="fa-solid fa-arrow-left me-1"></i> Cancel & Return</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDepartment() {
+    var role = document.querySelector('input[name="role"]:checked').value;
+    var deptSection = document.getElementById('departmentSection');
+    var deptSelect = document.getElementById('department_id');
+    
+    if (role === 'teacher') {
+        deptSection.style.display = 'none';
+        deptSelect.required = false;
+    } else {
+        deptSection.style.display = 'block';
+        deptSelect.required = true;
+    }
+}
+
+// Run on load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleDepartment();
+});
+</script>
+{% endblock %}

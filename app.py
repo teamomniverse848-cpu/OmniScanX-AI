@@ -114,13 +114,13 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        email = request.form.get('email')
         password = request.form.get('password')
         
         db = get_db_connection()
         if db:
             cursor = db.cursor(row_factory=dict_row)
-            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
             user = cursor.fetchone()
             
             # Use Werkzeug's check_password_hash
@@ -149,7 +149,7 @@ def login():
                 
                 return redirect(url_for('verify_otp'))
             else:
-                flash('Invalid username or password', 'danger')
+                flash('Invalid email or password', 'danger')
             cursor.close()
             db.close()
         else:
@@ -202,15 +202,87 @@ def auth_google():
             session['username'] = user['username']
             session['role'] = user['role']
             flash('Logged in successfully with Google.', 'success')
+            cursor.close()
+            db.close()
+            return redirect(url_for('index'))
         else:
-            flash('No account associated with this Google email. Contact Admin.', 'danger')
+            session['google_email'] = email
+            session['google_first_name'] = user_info.get('given_name', '')
+            session['google_last_name'] = user_info.get('family_name', '')
+            cursor.close()
+            db.close()
+            flash('Please complete your profile to continue.', 'info')
+            return redirect(url_for('google_signup'))
             
-        cursor.close()
-        db.close()
-        return redirect(url_for('index'))
-    
     flash('Database connection failed', 'danger')
     return redirect(url_for('login'))
+
+@app.route('/google_signup', methods=['GET', 'POST'])
+def google_signup():
+    if 'google_email' not in session:
+        return redirect(url_for('login'))
+        
+    db = get_db_connection()
+    if request.method == 'POST':
+        email = session['google_email']
+        first_name = request.form.get('first_name', session.get('google_first_name', ''))
+        last_name = request.form.get('last_name', session.get('google_last_name', ''))
+        department_id = request.form.get('department_id')
+        role = request.form.get('role')
+        password = request.form.get('password')
+        
+        if db:
+            cursor = db.cursor(row_factory=dict_row)
+            try:
+                hashed_pw = generate_password_hash(password)
+                db_role = 'admin' if role == 'teacher' else 'student'
+                # Temporary username based on email
+                username = email.split('@')[0] + str(random.randint(100, 999))
+                
+                cursor.execute("""
+                    INSERT INTO users (username, email, password_hash, role)
+                    VALUES (%s, %s, %s, %s) RETURNING id
+                """, (username, email, hashed_pw, db_role))
+                new_user_id = cursor.fetchone()['id']
+                
+                if db_role == 'student':
+                    cursor.execute("""
+                        INSERT INTO students (user_id, first_name, last_name, email, department_id, enrollment_date)
+                        VALUES (%s, %s, %s, %s, %s, CURRENT_DATE)
+                    """, (new_user_id, first_name, last_name, email, department_id))
+                
+                db.commit()
+                
+                # Auto-login
+                session.pop('google_email', None)
+                session.pop('google_first_name', None)
+                session.pop('google_last_name', None)
+                
+                session['user_id'] = new_user_id
+                session['username'] = username
+                session['role'] = db_role
+                
+                flash('Account created successfully!', 'success')
+                return redirect(url_for('index'))
+                
+            except Exception as e:
+                db.rollback()
+                flash(f'Error completing setup (Email might already exist in another record): {str(e)}', 'danger')
+            finally:
+                cursor.close()
+    
+    departments = []
+    if db:
+        cursor = db.cursor(row_factory=dict_row)
+        cursor.execute("SELECT id, name FROM departments")
+        departments = cursor.fetchall()
+        cursor.close()
+        db.close()
+        
+    return render_template('google_signup.html', departments=departments, 
+                           first_name=session.get('google_first_name', ''), 
+                           last_name=session.get('google_last_name', ''), 
+                           email=session.get('google_email', ''))
 
 @app.route('/logout')
 def logout():
@@ -221,11 +293,11 @@ def logout():
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
-        username = request.form.get('username')
+        email = request.form.get('email')
         db = get_db_connection()
         if db:
             cursor = db.cursor(row_factory=dict_row)
-            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
             user = cursor.fetchone()
             
             if user:
@@ -249,7 +321,7 @@ def forgot_password():
                 db.close()
                 return redirect(url_for('reset_password'))
             else:
-                flash('Username not found.', 'danger')
+                flash('Email not found.', 'danger')
             cursor.close()
             db.close()
     return render_template('forgot_password.html')
