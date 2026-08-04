@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: omniscanx-ai
+    env: python
+    buildCommand: "pip install -r requirements.txt && python download_models.py"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.0
+      - key: SUPABASE_DB_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
