@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Mark Attendance{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="glass-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fa-solid fa-clipboard-check"></i> Mark Attendance</h2>
+                <a href="/admin_dashboard" class="btn btn-sm btn-outline-light rounded-pill"><i class="fa-solid fa-arrow-left"></i> Back</a>
+            </div>
+            
+            <form action="/admin/attendance" method="POST">
+                <div class="mb-3">
+                    <label for="date" class="form-label text-light">Date</label>
+                    <input type="date" class="form-control form-control-glass" id="date" name="date" value="{{ today }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="student_id" class="form-label text-light">Student</label>
+                    <select class="form-control form-control-glass" id="student_id" name="student_id" required>
+                        <option value="" disabled selected>Select a student...</option>
+                        {% for student in students %}
+                            <option value="{{ student.id }}" style="color: #000;">{{ student.first_name }} {{ student.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="status" class="form-label text-light">Status</label>
+                    <select class="form-control form-control-glass" id="status" name="status" required>
+                        <option value="" disabled selected>Select status...</option>
+                        <option value="Present" style="color: #000;">Present</option>
+                        <option value="Absent" style="color: #000;">Absent</option>
+                        <option value="Late" style="color: #000;">Late</option>
+                    </select>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-animated">Submit Attendance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

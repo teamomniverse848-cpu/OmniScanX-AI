@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Student - Admin{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="glass-card">
+            <h2 class="text-center mb-4"><i class="fa-solid fa-user-pen"></i> Edit Student</h2>
+            
+            <form method="POST">
+                <div class="row mb-3">
+                    <div class="col">
+                        <label class="form-label">First Name</label>
+                        <input type="text" name="first_name" class="form-control form-control-glass" value="{{ student.first_name }}" required>
+                    </div>
+                    <div class="col">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-control form-control-glass" value="{{ student.last_name }}" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control form-control-glass" value="{{ student.email }}" required>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label">Department</label>
+                    <select name="department_id" class="form-select form-control-glass" required>
+                        {% for dept in departments %}
+                            <option value="{{ dept.id }}" {% if student.department_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary rounded-pill">Update Details</button>
+                    <a href="{{ url_for('admin_students') }}" class="btn btn-outline-light rounded-pill">Cancel</a>
+                </div>
+            </form>
+            
+            <hr class="border-secondary mt-4 mb-4">
+            
+            <div class="text-center">
+                <p class="text-light">Need to update this student's face data?</p>
+                <a href="{{ url_for('enroll_face') }}" class="btn btn-outline-info rounded-pill"><i class="fa-solid fa-camera"></i> Re-enroll Face</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

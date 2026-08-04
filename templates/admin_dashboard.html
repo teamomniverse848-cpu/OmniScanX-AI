@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="glass-card mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fa-solid fa-gauge-high"></i> Admin Dashboard</h2>
+        <h5 class="mb-0 text-light">Welcome, {{ session.username }}</h5>
+    </div>
+    
+    <div class="row text-center mb-4">
+        <div class="col-md-3">
+            <div class="glass-card py-4" style="background: rgba(0, 210, 255, 0.2);">
+                <i class="fa-solid fa-users fa-3x mb-2"></i>
+                <h5>Students</h5>
+                <a href="/admin/students" class="btn btn-sm btn-outline-light mt-2 rounded-pill">View</a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card py-4" style="background: rgba(0, 210, 255, 0.2);">
+                <i class="fa-solid fa-building fa-3x mb-2"></i>
+                <h5>Departments</h5>
+                <a href="/admin/departments" class="btn btn-sm btn-outline-light mt-2 rounded-pill">View</a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card py-4" style="background: rgba(0, 210, 255, 0.2);">
+                <i class="fa-solid fa-face-viewfinder fa-3x mb-2"></i>
+                <h5>Face Enroll</h5>
+                <a href="/admin/enroll_face" class="btn btn-sm btn-outline-light mt-2 rounded-pill">Capture</a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card py-4" style="background: rgba(255, 0, 100, 0.2);">
+                <i class="fa-solid fa-camera fa-3x mb-2"></i>
+                <h5>AI Attendance</h5>
+                <a href="/admin/auto_attendance" class="btn btn-sm btn-outline-light mt-2 rounded-pill">Mark</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="glass-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0"><i class="fa-solid fa-chart-line"></i> Recent Attendance Logs</h4>
+        <div>
+            <a href="/admin/weekly_report" class="btn btn-sm btn-info rounded-pill text-dark me-2"><i class="fa-solid fa-calendar-week"></i> Weekly Report</a>
+            <a href="/admin/export_attendance" class="btn btn-sm btn-success rounded-pill"><i class="fa-solid fa-file-csv"></i> Export CSV</a>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-glass table-borderless">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Student Name</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in recent_logs %}
+                <tr>
+                    <td>{{ log.date }}</td>
+                    <td>{{ log.first_name }} {{ log.last_name }}</td>
+                    <td>
+                        {% if log.status == 'Present' %}
+                            <span class="badge bg-success rounded-pill px-3">{{ log.status }}</span>
+                        {% elif log.status == 'Absent' %}
+                            <span class="badge bg-danger rounded-pill px-3">{{ log.status }}</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark rounded-pill px-3">{{ log.status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="text-center">No recent records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

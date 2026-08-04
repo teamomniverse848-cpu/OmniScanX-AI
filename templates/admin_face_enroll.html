@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}AI Face Enrollment - Admin{% endblock %}
+
+{% block content %}
+<div class="glass-card mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fa-solid fa-face-viewfinder"></i> Register & Enroll Student</h2>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light rounded-pill"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-5">
+            <h5 class="mb-3">1. Student Details</h5>
+            <div class="row mb-2">
+                <div class="col">
+                    <input type="text" id="firstName" class="form-control form-control-glass" placeholder="First Name" required>
+                </div>
+                <div class="col">
+                    <input type="text" id="lastName" class="form-control form-control-glass" placeholder="Last Name" required>
+                </div>
+            </div>
+            <input type="email" id="email" class="form-control form-control-glass mb-2" placeholder="Email Address" required>
+            <select id="departmentId" class="form-select form-control-glass mb-4" required>
+                <option value="" selected disabled>Choose a department...</option>
+                {% for dept in departments %}
+                    <option value="{{ dept.id }}">{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+            
+            <h5 class="mb-3">2. Capture Face (Multi-Angle)</h5>
+            <div class="d-grid gap-2 mb-4">
+                <button id="startCameraBtn" class="btn btn-primary rounded-pill"><i class="fa-solid fa-video"></i> Start Camera</button>
+                <button id="captureBtn" class="btn btn-success rounded-pill" disabled><i class="fa-solid fa-camera"></i> Start 20s Scan & Register</button>
+            </div>
+            
+            <div id="statusAlert" class="alert d-none" role="alert"></div>
+            
+            <!-- Progress Tracker -->
+            <div id="progressContainer" class="d-none">
+                <p class="text-light fw-bold" id="instructionText">Look Straight...</p>
+                <div class="progress mb-2" style="height: 20px; background: rgba(255,255,255,0.1);">
+                    <div id="scanProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;"></div>
+                </div>
+                <small class="text-light">Images Captured: <span id="captureCount">0</span> / 10</small>
+            </div>
+        </div>
+        
+        <div class="col-md-7 text-center">
+            <div class="glass-card p-2" style="background: rgba(0,0,0,0.2);">
+                <video id="videoFeed" width="100%" height="auto" autoplay muted style="border-radius: 10px; display: none;"></video>
+                <canvas id="captureCanvas" style="display: none;"></canvas>
+                <div id="cameraPlaceholder" class="py-5 text-light">
+                    <i class="fa-solid fa-camera fa-4x mb-3" style="opacity: 0.5;"></i>
+                    <p>Camera feed will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const startCameraBtn = document.getElementById('startCameraBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    const videoFeed = document.getElementById('videoFeed');
+    const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+    const captureCanvas = document.getElementById('captureCanvas');
+    const statusAlert = document.getElementById('statusAlert');
+    const progressContainer = document.getElementById('progressContainer');
+    const scanProgressBar = document.getElementById('scanProgressBar');
+    const instructionText = document.getElementById('instructionText');
+    const captureCountEl = document.getElementById('captureCount');
+    
+    // Form fields
+    const firstNameEl = document.getElementById('firstName');
+    const lastNameEl = document.getElementById('lastName');
+    const emailEl = document.getElementById('email');
+    const departmentIdEl = document.getElementById('departmentId');
+    
+    let stream = null;
+    let capturedImages = [];
+
+    const instructions = [
+        "Look Straight Ahead",
+        "Look Straight Ahead",
+        "Turn Slightly Left",
+        "Turn Slightly Left",
+        "Turn Slightly Right",
+        "Turn Slightly Right",
+        "Look Slightly Up",
+        "Look Slightly Up",
+        "Look Slightly Down",
+        "Look Slightly Down"
+    ];
+
+    startCameraBtn.addEventListener('click', async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoFeed.srcObject = stream;
+            videoFeed.style.display = 'block';
+            cameraPlaceholder.style.display = 'none';
+            captureBtn.disabled = false;
+            startCameraBtn.textContent = 'Camera Active';
+            startCameraBtn.disabled = true;
+        } catch (err) {
+            showAlert('Error accessing camera: ' + err.message, 'danger');
+        }
+    });
+
+    captureBtn.addEventListener('click', async () => {
+        // Validate form
+        if (!firstNameEl.value || !lastNameEl.value || !emailEl.value || !departmentIdEl.value) {
+            showAlert('Please fill out all student details first.', 'warning');
+            return;
+        }
+
+        captureBtn.disabled = true;
+        startCameraBtn.disabled = true;
+        progressContainer.classList.remove('d-none');
+        capturedImages = [];
+        let currentFrame = 0;
+        
+        showAlert('Scan starting... please follow instructions on screen.', 'info');
+        
+        // 20 second capture loop (1 frame every 2 seconds)
+        const captureInterval = setInterval(async () => {
+            if (currentFrame >= 10) {
+                clearInterval(captureInterval);
+                instructionText.textContent = "Processing AI embeddings... Please wait.";
+                scanProgressBar.classList.remove('progress-bar-animated');
+                await submitToServer();
+                return;
+            }
+            
+            // Draw video frame to canvas
+            captureCanvas.width = videoFeed.videoWidth;
+            captureCanvas.height = videoFeed.videoHeight;
+            const ctx = captureCanvas.getContext('2d');
+            ctx.drawImage(videoFeed, 0, 0, captureCanvas.width, captureCanvas.height);
+            
+            // Push base64 image
+            capturedImages.push(captureCanvas.toDataURL('image/jpeg'));
+            
+            currentFrame++;
+            
+            // Update UI
+            scanProgressBar.style.width = `${(currentFrame / 10) * 100}%`;
+            captureCountEl.textContent = currentFrame;
+            
+            if (currentFrame < 10) {
+                instructionText.textContent = instructions[currentFrame];
+            }
+            
+        }, 2000);
+    });
+    
+    async function submitToServer() {
+        captureBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading AI Data...';
+        
+        try {
+            // Because we are sending a JSON array of images, we use application/json
+            const payload = {
+                first_name: firstNameEl.value,
+                last_name: lastNameEl.value,
+                email: emailEl.value,
+                department_id: departmentIdEl.value,
+                images: capturedImages
+            };
+            
+            const response = await fetch('/admin/enroll_face', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showAlert(result.message, 'success');
+                instructionText.textContent = "Enrollment Complete!";
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                showAlert(result.message, 'danger');
+                resetCaptureBtn();
+            }
+        } catch (err) {
+            showAlert('Server error during enrollment.', 'danger');
+            resetCaptureBtn();
+        }
+    }
+    
+    function resetCaptureBtn() {
+        captureBtn.disabled = false;
+        captureBtn.innerHTML = '<i class="fa-solid fa-camera"></i> Start 20s Scan & Register';
+        progressContainer.classList.add('d-none');
+    }
+    
+    function showAlert(message, type) {
+        statusAlert.className = `alert alert-${type} mt-3`;
+        statusAlert.textContent = message;
+        statusAlert.classList.remove('d-none');
+    }
+</script>
+{% endblock %}

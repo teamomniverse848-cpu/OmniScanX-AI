@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Weekly Attendance Report - Admin{% endblock %}
+
+{% block content %}
+<div class="glass-card mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fa-solid fa-chart-column"></i> Weekly AI Attendance Report</h2>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light rounded-pill"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+    <p class="text-light mb-4">This report shows the total number of classes attended by each student across all batches and branches over the last 7 days.</p>
+
+    <div class="table-responsive">
+        <table class="table table-glass table-borderless">
+            <thead>
+                <tr>
+                    <th>Branch / Dept</th>
+                    <th>Batch (Section)</th>
+                    <th>Class / Subject</th>
+                    <th>Student Name</th>
+                    <th>Classes Attended (Last 7 Days)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report_data %}
+                <tr>
+                    <td><span class="badge bg-info text-dark rounded-pill px-3">{{ row.department }}</span></td>
+                    <td>{{ row.batch }} ({{ row.section }})</td>
+                    <td class="fw-bold">{{ row.class_name }}</td>
+                    <td>{{ row.last_name }}, {{ row.first_name }}</td>
+                    <td>
+                        <span class="badge bg-success rounded-pill px-3">{{ row.days_present }} Classes</span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-light">No AI auto-attendance records found in the last 7 days.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="d-grid mt-4">
+        <button class="btn btn-outline-light rounded-pill" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Report</button>
+    </div>
+</div>
+{% endblock %}

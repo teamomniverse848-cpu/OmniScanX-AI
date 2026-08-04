@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}AI Auto-Attendance - Admin{% endblock %}
+
+{% block content %}
+<div class="glass-card mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fa-solid fa-camera"></i> AI Auto-Attendance</h2>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light rounded-pill"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-5">
+            <h5 class="mb-3">1. Class Details</h5>
+            <div class="mb-3">
+                <label class="form-label">Faculty Name</label>
+                <input type="text" id="facultyName" class="form-control form-control-glass" placeholder="e.g. Dr. Smith">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Subject / Class</label>
+                <input type="text" id="className" class="form-control form-control-glass" placeholder="e.g. Data Structures">
+            </div>
+            <div class="row mb-3">
+                <div class="col">
+                    <label class="form-label">Batch</label>
+                    <input type="text" id="batch" class="form-control form-control-glass" placeholder="e.g. 2024">
+                </div>
+                <div class="col">
+                    <label class="form-label">Section</label>
+                    <input type="text" id="section" class="form-control form-control-glass" placeholder="e.g. A">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Department</label>
+                <select id="departmentId" class="form-select form-control-glass">
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Date</label>
+                <input type="date" id="date" class="form-control form-control-glass" value="{{ today }}">
+            </div>
+            
+            <h5 class="mb-3">2. Capture Class Photo</h5>
+            <div class="d-grid gap-2 mb-4">
+                <button id="startCameraBtn" class="btn btn-primary rounded-pill"><i class="fa-solid fa-video"></i> Open Camera</button>
+                <button id="captureBtn" class="btn btn-success rounded-pill" disabled><i class="fa-solid fa-wand-magic-sparkles"></i> Scan & Mark Attendance</button>
+            </div>
+            
+            <div id="statusAlert" class="alert d-none" role="alert"></div>
+        </div>
+        
+        <div class="col-md-7 text-center">
+            <div class="glass-card p-2" style="background: rgba(0,0,0,0.2);">
+                <video id="videoFeed" width="100%" height="auto" autoplay muted style="border-radius: 10px; display: none;"></video>
+                <canvas id="captureCanvas" style="display: none;"></canvas>
+                <div id="cameraPlaceholder" class="py-5 text-light">
+                    <i class="fa-solid fa-users-viewfinder fa-4x mb-3" style="opacity: 0.5;"></i>
+                    <p>Camera feed will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const startCameraBtn = document.getElementById('startCameraBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    const videoFeed = document.getElementById('videoFeed');
+    const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+    const captureCanvas = document.getElementById('captureCanvas');
+    const statusAlert = document.getElementById('statusAlert');
+    
+    let stream = null;
+
+    startCameraBtn.addEventListener('click', async () => {
+        try {
+            // Request back camera if on mobile, otherwise default
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" } 
+            });
+            videoFeed.srcObject = stream;
+            videoFeed.style.display = 'block';
+            cameraPlaceholder.style.display = 'none';
+            captureBtn.disabled = false;
+            startCameraBtn.textContent = 'Camera Active';
+            startCameraBtn.disabled = true;
+        } catch (err) {
+            showAlert('Error accessing camera: ' + err.message, 'danger');
+        }
+    });
+
+    captureBtn.addEventListener('click', async () => {
+        const facultyName = document.getElementById('facultyName').value;
+        const className = document.getElementById('className').value;
+        const batch = document.getElementById('batch').value;
+        const section = document.getElementById('section').value;
+        const departmentId = document.getElementById('departmentId').value;
+        const date = document.getElementById('date').value;
+        
+        if (!facultyName || !className || !batch || !section) {
+            showAlert('Please fill in all class details before scanning.', 'warning');
+            return;
+        }
+
+        // Draw video frame to canvas
+        captureCanvas.width = videoFeed.videoWidth;
+        captureCanvas.height = videoFeed.videoHeight;
+        const ctx = captureCanvas.getContext('2d');
+        ctx.drawImage(videoFeed, 0, 0, captureCanvas.width, captureCanvas.height);
+        
+        // Get base64 image (use jpeg to reduce payload size)
+        const imageData = captureCanvas.toDataURL('image/jpeg', 0.8);
+        
+        // Show loading state
+        captureBtn.disabled = true;
+        captureBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running AI Analysis... (This may take a few seconds)';
+        
+        // Send to backend
+        try {
+            const formData = new FormData();
+            formData.append('faculty_name', facultyName);
+            formData.append('class_name', className);
+            formData.append('batch', batch);
+            formData.append('section', section);
+            formData.append('department_id', departmentId);
+            formData.append('date', date);
+            formData.append('image_data', imageData);
+            
+            const response = await fetch('/admin/auto_attendance', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showAlert(`${result.message} - View logs in dashboard.`, 'success');
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                showAlert(result.message, 'danger');
+                captureBtn.disabled = false;
+                captureBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Scan & Mark Attendance';
+            }
+        } catch (err) {
+            showAlert('Server error during AI processing.', 'danger');
+            captureBtn.disabled = false;
+            captureBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Scan & Mark Attendance';
+        }
+    });
+    
+    function showAlert(message, type) {
+        statusAlert.className = `alert alert-${type} mt-3`;
+        statusAlert.textContent = message;
+        statusAlert.classList.remove('d-none');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Login - OmniScanX{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-5 col-lg-4">
+        <div class="glass-card text-center">
+            <h2 class="mb-4 fw-bold">Welcome Back</h2>
+            <p class="text-light mb-4">Please login to your account.</p>
+            
+            <form action="/login" method="POST">
+                <div class="mb-3 text-start">
+                    <label for="username" class="form-label"><i class="fa-solid fa-user"></i> Username</label>
+                    <input type="text" class="form-control form-control-glass" id="username" name="username" placeholder="Enter username" required>
+                </div>
+                
+                <div class="mb-4 text-start">
+                    <label for="password" class="form-label"><i class="fa-solid fa-lock"></i> Password</label>
+                    <input type="password" class="form-control form-control-glass" id="password" name="password" placeholder="Enter password" required>
+                </div>
+                
+                <div class="d-grid gap-2 mb-3">
+                    <button type="submit" class="btn btn-animated animate-pulse-slow">
+                        Login Now <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+                
+                <hr class="text-light">
+                
+                <div class="d-grid gap-2">
+                    <a href="/login/google" class="btn btn-light rounded-pill w-100 fw-bold">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" height="20" class="me-2"> Continue with Google
+                    </a>
+                </div>
+            </form>
+            
+            <div class="mt-4 text-center">
+                <p class="text-light mb-0">Don't have an account? <a href="{{ url_for('signup') }}" class="text-info fw-bold">Sign up here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - OmniScanX{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="glass-card">
+            <h2 class="text-center mb-4">Create an Account</h2>
+            <p class="text-center text-light">Register as a student or teacher to access the system.</p>
+            
+            <form action="{{ url_for('signup') }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label text-light"><i class="fa-solid fa-user-tag"></i> I am a...</label>
+                    <div class="d-flex gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" id="roleStudent" value="student" checked onchange="toggleDepartment()">
+                            <label class="form-check-label text-light" for="roleStudent">Student</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" id="roleTeacher" value="teacher" onchange="toggleDepartment()">
+                            <label class="form-check-label text-light" for="roleTeacher">Teacher / Admin</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="first_name" class="form-label text-light"><i class="fa-solid fa-user"></i> First Name</label>
+                        <input type="text" class="form-control form-control-glass" id="first_name" name="first_name" placeholder="John" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="last_name" class="form-label text-light">Last Name</label>
+                        <input type="text" class="form-control form-control-glass" id="last_name" name="last_name" placeholder="Doe" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label text-light"><i class="fa-solid fa-envelope"></i> Email Address</label>
+                    <input type="email" class="form-control form-control-glass" id="email" name="email" placeholder="student@example.com" required>
+                </div>
+
+                <div class="mb-3" id="departmentSection">
+                    <label for="department_id" class="form-label text-light"><i class="fa-solid fa-building"></i> Branch / Department</label>
+                    <select class="form-control form-control-glass" id="department_id" name="department_id">
+                        <option value="" disabled selected>Select your branch/department...</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept.id }}" style="color: #000;">{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="username" class="form-label text-light"><i class="fa-solid fa-at"></i> Username</label>
+                    <input type="text" class="form-control form-control-glass" id="username" name="username" placeholder="Choose a unique username" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="password" class="form-label text-light"><i class="fa-solid fa-lock"></i> Password</label>
+                    <input type="password" class="form-control form-control-glass" id="password" name="password" placeholder="Create a strong password" required>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-animated">Sign Up Now <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </form>
+
+            <div class="mt-4 text-center">
+                <p class="text-light mb-0">Already have an account? <a href="{{ url_for('login') }}" class="text-info fw-bold">Login here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDepartment() {
+    var role = document.querySelector('input[name="role"]:checked').value;
+    var deptSection = document.getElementById('departmentSection');
+    var deptSelect = document.getElementById('department_id');
+    
+    if (role === 'teacher') {
+        deptSection.style.display = 'none';
+        deptSelect.required = false;
+    } else {
+        deptSection.style.display = 'block';
+        deptSelect.required = true;
+    }
+}
+
+// Run on load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleDepartment();
+});
+</script>
+{% endblock %}
