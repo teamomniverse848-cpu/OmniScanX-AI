@@ -629,6 +629,11 @@ def enroll_face():
         if db:
             cursor = db.cursor(row_factory=dict_row)
             try:
+                # 0. Check if email already exists
+                cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+                if cursor.fetchone():
+                    return {'success': False, 'message': 'Email already exists. Please use a different email.'}, 400
+
                 # 1. Create User
                 # Generate a temporary username
                 username = f"{first_name.lower()}.{last_name.lower()}.{random.randint(1000,9999)}"

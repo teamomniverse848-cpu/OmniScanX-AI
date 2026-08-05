@@ -19,7 +19,8 @@ recognizer_model = os.path.join(base_dir, 'models', 'face_recognition_sface.onnx
 
 # Ensure models exist before initializing
 if CV2_AVAILABLE and os.path.exists(detector_model) and os.path.exists(recognizer_model):
-    face_detector = cv2.FaceDetectorYN.create(detector_model, "", (320, 320), 0.9, 0.3, 5000)
+    # Lowered score_threshold from 0.9 to 0.6 to detect distant/smaller faces
+    face_detector = cv2.FaceDetectorYN.create(detector_model, "", (320, 320), 0.6, 0.3, 5000)
     face_recognizer = cv2.FaceRecognizerSF.create(recognizer_model, "")
 else:
     face_detector = None
