@@ -100,3 +100,12 @@ ALTER TABLE attendance ADD COLUMN IF NOT EXISTS class_session_id INT;
 ALTER TABLE attendance DROP CONSTRAINT IF EXISTS fk_class_session;
 ALTER TABLE attendance ADD CONSTRAINT fk_class_session FOREIGN KEY (class_session_id) REFERENCES class_sessions(id) ON DELETE SET NULL;
 
+-- ===================================================
+-- Enable Row Level Security (RLS) to prevent public Data API access
+-- ===================================================
+ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE face_embeddings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE class_sessions ENABLE ROW LEVEL SECURITY;

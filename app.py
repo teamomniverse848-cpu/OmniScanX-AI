@@ -328,14 +328,15 @@ def forgot_password():
 
 @app.route('/reset_password', methods=['GET', 'POST'])
 def reset_password():
-    if 'reset_otp' not in session:
+    if 'reset_otp' not in session or 'reset_user_id' not in session:
+        flash('Session expired. Please request a new OTP.', 'warning')
         return redirect(url_for('forgot_password'))
-        
+
     if request.method == 'POST':
-        entered_otp = request.form.get('otp')
+        user_otp = request.form.get('otp')
         new_password = request.form.get('new_password')
         
-        if entered_otp == session.get('reset_otp'):
+        if user_otp == session.get('reset_otp'):
             user_id = session.get('reset_user_id')
             db = get_db_connection()
             if db:
