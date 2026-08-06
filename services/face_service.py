@@ -73,11 +73,11 @@ def cosine_distance(a, b):
     cos_sim = np.dot(a, b) / (a_norm * b_norm)
     return 1 - cos_sim
 
-def recognize_faces_in_group(group_image_path, known_embeddings_dict, threshold=0.363):
+def recognize_faces_in_group(group_image_path, known_embeddings_dict, threshold=0.50):
     """
     Takes a group photo and a dictionary of known embeddings {student_id: embedding_vector}
     Returns a list of student_ids that were matched in the photo.
-    OpenCV SFace cosine distance threshold is usually 0.363
+    Increased threshold to 0.50 to reduce false negatives in real-world environments.
     """
     if face_detector is None or face_recognizer is None:
         return []
