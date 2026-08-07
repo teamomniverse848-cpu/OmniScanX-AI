@@ -441,7 +441,7 @@ def admin_students():
     if db:
         cursor = db.cursor(row_factory=dict_row)
         cursor.execute("""
-            SELECT s.id, s.first_name, s.last_name, s.email, d.name as department
+            SELECT s.id, s.first_name, s.last_name, s.email, s.profile_picture, d.name as department
             FROM students s
             JOIN departments d ON s.department_id = d.id
             ORDER BY s.last_name ASC
@@ -647,9 +647,9 @@ def enroll_face():
                 
                 # 2. Create Student
                 cursor.execute("""
-                    INSERT INTO students (user_id, first_name, last_name, email, department_id, enrollment_date)
-                    VALUES (%s, %s, %s, %s, %s, CURRENT_DATE) RETURNING id
-                """, (new_user_id, first_name, last_name, email, department_id))
+                    INSERT INTO students (user_id, first_name, last_name, email, department_id, enrollment_date, profile_picture)
+                    VALUES (%s, %s, %s, %s, %s, CURRENT_DATE, %s) RETURNING id
+                """, (new_user_id, first_name, last_name, email, department_id, images[0]))
                 student_id = cursor.fetchone()['id']
                 
                 # 3. Process the 10 images to get multiple embeddings

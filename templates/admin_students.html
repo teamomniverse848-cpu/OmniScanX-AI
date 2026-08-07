@@ -22,7 +22,20 @@
             <tbody>
                 {% for student in students %}
                 <tr>
-                    <td>{{ student.last_name }}, {{ student.first_name }}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            {% if student.profile_picture %}
+                                <img src="{{ student.profile_picture }}" alt="Profile" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid rgba(255,255,255,0.2);">
+                            {% else %}
+                                <div class="rounded-circle me-3 d-flex justify-content-center align-items-center" style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);">
+                                    <i class="fa-solid fa-user text-light"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <span class="fw-bold">{{ student.last_name }}, {{ student.first_name }}</span>
+                            </div>
+                        </div>
+                    </td>
                     <td>{{ student.email }}</td>
                     <td>{{ student.department }}</td>
                     <td>

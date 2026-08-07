@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS students (
     email VARCHAR(100) NOT NULL UNIQUE,
     department_id INT NOT NULL,
     enrollment_date DATE NOT NULL,
+    profile_picture TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE RESTRICT
 );
