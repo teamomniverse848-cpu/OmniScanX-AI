@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Attendance Register - Admin{% endblock %}
+
+{% block content %}
+<div class="glass-card mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fa-solid fa-book"></i> Monthly Attendance Register</h2>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light rounded-pill"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+    <!-- Date Selector -->
+    <form method="POST" action="{{ url_for('attendance_register') }}" class="row g-3 mb-4 align-items-end">
+        <div class="col-md-3">
+            <label for="month" class="form-label text-light">Month</label>
+            <select name="month" id="month" class="form-select bg-dark text-light border-secondary">
+                <option value="1" {% if month == 1 %}selected{% endif %}>January</option>
+                <option value="2" {% if month == 2 %}selected{% endif %}>February</option>
+                <option value="3" {% if month == 3 %}selected{% endif %}>March</option>
+                <option value="4" {% if month == 4 %}selected{% endif %}>April</option>
+                <option value="5" {% if month == 5 %}selected{% endif %}>May</option>
+                <option value="6" {% if month == 6 %}selected{% endif %}>June</option>
+                <option value="7" {% if month == 7 %}selected{% endif %}>July</option>
+                <option value="8" {% if month == 8 %}selected{% endif %}>August</option>
+                <option value="9" {% if month == 9 %}selected{% endif %}>September</option>
+                <option value="10" {% if month == 10 %}selected{% endif %}>October</option>
+                <option value="11" {% if month == 11 %}selected{% endif %}>November</option>
+                <option value="12" {% if month == 12 %}selected{% endif %}>December</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="year" class="form-label text-light">Year</label>
+            <input type="number" name="year" id="year" class="form-control bg-dark text-light border-secondary" value="{{ year }}" min="2020" max="2100">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary rounded-pill w-100"><i class="fa-solid fa-filter"></i> View Register</button>
+        </div>
+    </form>
+
+    <div class="table-responsive bg-dark p-3 rounded border border-secondary" style="max-height: 70vh;">
+        <table class="table table-dark table-bordered table-sm text-center mb-0" style="white-space: nowrap; font-size: 0.85rem;">
+            <thead class="sticky-top bg-dark">
+                <tr>
+                    <th rowspan="2" class="align-middle border-light bg-dark" style="z-index: 2; position: sticky; left: 0;">Sl. No.</th>
+                    <th rowspan="2" class="align-middle border-light bg-dark text-start" style="z-index: 2; position: sticky; left: 50px;">Student Name</th>
+                    <th rowspan="2" class="align-middle border-light bg-dark text-start" style="z-index: 2; position: sticky; left: 250px;">Department</th>
+                    <th colspan="{{ days_in_month }}" class="border-light bg-dark">Days of the Month</th>
+                </tr>
+                <tr>
+                    {% for day in range(1, days_in_month + 1) %}
+                        <th class="border-light bg-dark" style="min-width: 30px;">{{ day }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in register_data %}
+                <tr>
+                    <td class="border-secondary bg-dark" style="position: sticky; left: 0;">{{ loop.index }}</td>
+                    <td class="border-secondary text-start fw-bold bg-dark" style="position: sticky; left: 50px;">{{ student.last_name }}, {{ student.first_name }}</td>
+                    <td class="border-secondary text-start text-muted bg-dark" style="position: sticky; left: 250px; font-size: 0.75rem;">{{ student.department }}</td>
+                    
+                    {% for day in range(1, days_in_month + 1) %}
+                        {% if day in student.attendance %}
+                            <td class="border-secondary text-success fw-bold">P</td>
+                        {% else %}
+                            <td class="border-secondary text-danger opacity-50" style="font-size: 0.7rem;">A</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{{ days_in_month + 3 }}" class="text-center text-muted py-4">No students found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="d-grid mt-4">
+        <button class="btn btn-outline-light rounded-pill" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Register</button>
+    </div>
+</div>
+
+<style>
+    /* Styling for print mode so it looks like a real physical register */
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .table-responsive, .table-responsive * {
+            visibility: visible;
+        }
+        .table-responsive {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            background: white !important;
+            color: black !important;
+        }
+        .table-dark {
+            background-color: white !important;
+            color: black !important;
+        }
+        .bg-dark {
+            background-color: white !important;
+        }
+        .text-success {
+            color: black !important;
+            font-weight: bold;
+        }
+        .text-danger {
+            color: #666 !important;
+        }
+        .border-secondary, .border-light {
+            border-color: #000 !important;
+        }
+    }
+</style>
+{% endblock %}

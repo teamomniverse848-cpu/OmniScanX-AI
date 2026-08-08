@@ -813,5 +813,64 @@ def weekly_report():
         
     return render_template('admin_weekly_report.html', report_data=report_data)
 
+@app.route('/admin/attendance_register', methods=['GET', 'POST'])
+def attendance_register():
+    if session.get('role') != 'admin':
+        flash('Unauthorized access!', 'danger')
+        return redirect(url_for('login'))
+        
+    db = get_db_connection()
+    register_data = []
+    
+    from datetime import datetime
+    import calendar
+    now = datetime.now()
+    selected_month = int(request.form.get('month', now.month)) if request.method == 'POST' else now.month
+    selected_year = int(request.form.get('year', now.year)) if request.method == 'POST' else now.year
+    
+    days_in_month = calendar.monthrange(selected_year, selected_month)[1]
+    
+    if db:
+        cursor = db.cursor(row_factory=dict_row)
+        
+        # 1. Fetch all students
+        cursor.execute("""
+            SELECT s.id, s.first_name, s.last_name, s.email, d.name as department
+            FROM students s
+            JOIN departments d ON s.department_id = d.id
+            ORDER BY d.name, s.last_name, s.first_name
+        """)
+        students = cursor.fetchall()
+        
+        # 2. Fetch all attendance for the selected month/year
+        cursor.execute("""
+            SELECT student_id, EXTRACT(DAY FROM date) as day, status
+            FROM attendance
+            WHERE EXTRACT(MONTH FROM date) = %s AND EXTRACT(YEAR FROM date) = %s
+            AND status = 'Present'
+        """, (selected_month, selected_year))
+        
+        attendance_records = cursor.fetchall()
+        cursor.close()
+        db.close()
+        
+        # Build attendance dictionary
+        attendance_map = {}
+        for r in attendance_records:
+            sid = r['student_id']
+            if sid not in attendance_map:
+                attendance_map[sid] = set()
+            attendance_map[sid].add(int(r['day']))
+            
+        for s in students:
+            s['attendance'] = attendance_map.get(s['id'], set())
+            register_data.append(s)
+            
+    return render_template('admin_attendance_register.html', 
+                          register_data=register_data, 
+                          month=selected_month, 
+                          year=selected_year,
+                          days_in_month=days_in_month)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
